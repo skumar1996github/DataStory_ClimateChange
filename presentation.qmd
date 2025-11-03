@@ -30,7 +30,7 @@ library(knitr)
 library(scales)
 ```
 
-----------------------------------BETULS CODE ENDS HERE-----------------------
+----------------------------------BETULS CODE STARTS HERE-----------------------
 
 betuls content here...
 
