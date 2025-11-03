@@ -7,19 +7,156 @@ format:
 
 ## Slide deck for your presentation
 
-Change this file to become your presentation slide deck. 
+Change this file to become your presentation slide deck.
 
-The slide deck which tells the data story with visuals in a *narrative structure*^[See *Effective Data Storytelling*, Brent Dykes (2020), Figure 4.3.]. 
+The slide deck which tells the data story with visuals in a *narrative structure*[^1].
 
+[^1]: See *Effective Data Storytelling*, Brent Dykes (2020), Figure 4.3.
 
 ## This deck is made with quarto revealjs
 
-- You find documentation of how to make revealjs presentations with quarto here:
-<https://quarto.org/docs/presentations/revealjs/>
-- Skip through the demo presentation and learn from there. 
-
+-   You find documentation of how to make revealjs presentations with quarto here: <https://quarto.org/docs/presentations/revealjs/>
+-   Skip through the demo presentation and learn from there.
 
 ## Remove all this content ...
 
-... and put your content. 
- 
+... and put your content.
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(knitr)
+library(scales)
+```
+
+----------------------------------BETULS CODE ENDS HERE-----------------------
+
+betuls content here...
+
+----------------------------------BETULS CODE ENDS HERE--------------------------
+
+----------------------------------SAGARS CODE STARTS HERE-----------------------
+
+## Insight 2: Climate responsibility is unequal - historical emissions are concentrated in rich countries
+
+It has become clear that over the last few decades, humans are emitting more carbon dioxide into the earth’s atmosphere than ever before - and it is warming our planet. While the entire earth warms, not all nations share equal responsibility for this crisis. As we will see, historically, more developed or industrialized countries and continents like the United States and member states of the European Union, and as a whole Europe, have released more carbon dioxide into the atmosphere that has accumulated over the centuries. On the other hand, developing countries like India and many in Africa are only now beginning to emit more carbon as they lift themselves into the industrialized world. In addition, they argue that emissions by the developed countries are for “lifestyle” emissions and for the developing are “survival” emissions. This inequality raises the critical question of who should bear the responsibility of climate change?
+
+In order to come up with any kind of answer, we need to break down the question. First, we first need to identify which countries emit the most carbon dioxide today, then look at which countries have emitted the most in total then finally identify the countries which emit the most per capita. This will allow us to understand both the present and historical dimensions of responsibility. By comparing total, annual, and per capita emissions, we can form a more balanced picture of climate accountability—distinguishing between nations driving ongoing pollution and those still developing their economies with far smaller carbon footprints.
+
+## Question 1: Which Countries Emit The Most Carbon Today?
+
+```{r}
+# read data
+data <- read_csv("annual-co2-emissions-per-country.csv", show_col_types = FALSE)
+
+# known regional or group names to exclude
+regions <- c(
+  "Asia", "Africa", "North America", "South America", "Oceania",
+  "European Union (27)", "European Union (28)", "Middle East (GCP)",
+  "High-income countries", "Low-income countries", "Upper-middle-income countries",
+  "Lower-middle-income countries", "Non-OECD (GCP)", "OECD (GCP)", "Asia (GCP)",
+  "Europe (GCP)", "North America (GCP)", "Asia (excl. China and India)", "Europe (excl. EU-27)", "Europe (excl. EU-28)", "North America (excl. USA)", "South America (GCP)", "Africa (GCP)"
+)
+
+# create top 10 list
+top10_2022 <- data |>
+  filter(Year == 2023) |>
+  filter(!Entity %in% regions) |>
+  select(Entity, `Annual CO₂ emissions`) |>
+  arrange(desc(`Annual CO₂ emissions`)) |>
+  slice_head(n = 11)
+
+ggplot(top10_2022,
+       aes(x = reorder(Entity, `Annual CO₂ emissions`),
+           y = `Annual CO₂ emissions`,
+           fill = Entity)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(
+    title = "Top 10 CO2 Emitting Countries (+ World) in 2023",
+    x = "Country",
+    y = "Annual CO2 Emissions (tonnes)",
+  ) +
+  scale_y_continuous(labels = label_number(scale_cut = cut_short_scale())) +
+  theme_minimal()
+```
+
+Looking at the top 10 countries that emit the most carbon dioxide in the year 2023, we see that China is by far and away the worlds largest emitter with almost 12 billion tonnes of carbon dioxide. Its followed by Europe at almost five billion and not far behind is the United States also at around five billion. Given that the total world combined carbon dioxide emissions in 2023 were 37 billion, and that the top three emitters in total emit 22 billion (almost 60%), it is clear that without the willingness and action of the these three industrial giants, that fixing climate will remain an impossible task. These three economies hold the greatest leverage in reducing global emissions, not only because of their industrial scale but also their technological and financial capacity to lead the transition toward cleaner energy. Their policies, innovations, and international cooperation will largely determine the success of of our collective global climate goals.
+
+However, if we only look at the total global emissions today, we are not able to grasp the entire picture. Therefore we need to look at historical emissions and how much countries have emitted over time.
+
+## Question 2: Which Countries Emitted The Most Carbon Dioxide In Total?
+
+```{r}
+countries <- c("United States", "China", "India", "Germany", "Europe", "Russia", "Japan")
+
+# --- Compute cumulative emissions by country over time ---
+co2_countries <- data |>
+  filter(Entity %in% countries) |>
+  select(Entity, Year, `Annual CO₂ emissions`) |>
+  group_by(Entity) |>
+  arrange(Year, .by_group = TRUE) |>
+  mutate(Cumulative = cumsum(`Annual CO₂ emissions`)) |>
+  ungroup()
+
+# --- Pick milestone years for clearer bars ---
+milestones <- c(1800, 1900, 1950, 2000, 2025)
+co2_milestones <- co2_countries |>
+  filter(Year %in% milestones)
+
+# plot stacked bar chart
+ggplot(co2_milestones, aes(x = factor(Year), y = Cumulative, fill = Entity)) +
+  geom_col() +
+  labs(
+    title = "Cumulative CO2 Emissions by Country (1750's–2023)",
+    x = "Year",
+    y = "Cumulative CO2 Emissions (tonnes)",
+    fill = "Country"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+If we look at historical emissions, there is a drastic change in the outlook. By far, the United States and Europe have emitted more carbon dioxide into the atmosphere during the 1950's and especially during the 21st century. Europe is responsible for 34% of the worlds historical emissions, while The United States is responsible for 27% with most of this coming from the 20th century. Third is China with 17%, which is exactly half of Europe's contribution. Then there is a drastic fall when it comes for countries like India, Russia, Japan and Germany with all under 8%. Therefore, the narrative that rapid climate change is really the responsibility of the developing world with its current day emission rates is not true.
+
+```{r}
+# pick the latest available year
+latest_year <- max(co2_countries$Year, na.rm = TRUE)
+
+# calculate share of global cumulative emissions
+shares <- co2_countries |>
+  filter(Year == latest_year) |>
+  group_by(Year) |>
+  mutate(share = 100 * Cumulative / sum(Cumulative)) |>
+  ungroup() |>
+  arrange(desc(share)) |>
+  slice_head(n = 7)
+
+# plot
+ggplot(shares, 
+       aes(x = reorder(Entity, share), 
+           y = share, 
+           fill = Entity)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(
+    title = paste("Top 7 Cumulative CO2 Emitters in", latest_year),
+    x = "Country",
+    y = "Share of global cumulative CO2 emissions (%)"
+  ) +
+  scale_y_continuous(labels = scales::label_number(accuracy = 0.1)) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    panel.grid.minor = element_blank(),
+    axis.title.y = element_blank()
+  )
+```
+
+## Question 3: Which Countries Emitted The Most Carbon Dioxide Per Person?
+
+```{r}
+
+```
+
+----------------------------------SAGARS CODE ENDS HERE--------------------------------------
