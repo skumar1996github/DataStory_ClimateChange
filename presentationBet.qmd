@@ -1,0 +1,169 @@
+---
+title: "Data Story Title"
+format: 
+  revealjs:
+    slide-number: true
+---
+
+## Remove all this content ...
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(knitr)
+library(scales)
+library(readxl)
+```
+
+```{r}
+# Reading the data
+data <- read_excel("datasets/owid-co2-data.xlsx", sheet = "Data")
+glimpse(data)
+head(data)
+```
+
+## GDP per capita vs. CO2 per capita
+
+```{r}
+# 1) Build a compact working dataset
+#    Keep only the variables we need, restrict to the modern period,
+#    drop rows with missing/invalid values, and compute per-capita metrics.
+df_simple <- data %>%
+  select(country, year, population, gdp, co2) %>%     # keep only essentials
+  filter(year >= 1950) %>%                            # modern period
+  filter(!is.na(population), !is.na(gdp), !is.na(co2),
+         population > 0) %>%                          # valid rows only
+  mutate(
+    gdp_pc = gdp / population,                        # GDP per capita
+    co2_pc = co2 / population                         # CO2 per capita
+  )
+
+# 2) Use the latest year that actually has both per-capita metrics
+latest <- df_simple %>%
+  filter(!is.na(gdp_pc), !is.na(co2_pc)) %>%
+  summarise(latest = max(year, na.rm = TRUE)) %>%
+  pull(latest)
+
+# 3) Slice the data for that year
+df_latest <- df_simple %>%
+  filter(year == latest)
+
+# 4) Scatter plot: GDP per capita vs CO2 per capita (log-log)
+#    LOESS shows the general trend without assuming linearity.
+p_scatter <- ggplot(df_latest, aes(x = gdp_pc, y = co2_pc)) +
+  geom_point(alpha = 0.6) +                                            # countries
+  geom_smooth(method = "loess", se = FALSE, linewidth = 1) +           # trend line
+  scale_x_log10(labels = label_number(scale_cut = cut_short_scale())) +# readable ticks
+  scale_y_log10(labels = label_number(scale_cut = cut_short_scale())) +
+  labs(
+    title = paste("Relationship between GDP per capita and CO2 per capita —", latest),
+    subtitle = "Higher income levels are generally associated with higher CO2 emissions per person.",
+    x = "GDP per capita (log scale)",
+    y = "CO2 emissions per capita (log scale)"
+  ) +
+  theme_minimal(base_size = 14)
+
+p_scatter
+
+```
+
+This chart shows that countries with higher income levels tend to emit more CO₂ per person. Each point represents a country, and both axes use a log scale to allow comparison across very different economies. The upward trend indicates that as GDP per capita increases, CO₂ emissions per capita also generally rise. However, the points are spread out rather than forming a perfect line, which means income alone does not determine emissions. Some wealthy countries emit less because they use cleaner energy sources or have strong climate policies, while some rapidly developing countries emit more due to coal-based industrial growth.
+
+## Economic Development and CO₂ Emissions Pathways (1990–Present)
+
+```{r}
+# Countries to compare
+countries <- c("Turkey", "United States", "China", "Germany", "India")
+
+# Filter: keep valid vars and strictly positive values for log axes
+df_paths <- df_simple %>%
+  filter(country %in% countries,
+         year >= 1990,
+         !is.na(gdp_pc), !is.na(co2_pc),
+         gdp_pc > 0, co2_pc > 0)
+
+# Latest point per country to highlight
+latest_points <- df_paths %>%
+  group_by(country) %>%
+  slice_max(year, with_ties = FALSE) %>%
+  ungroup()
+
+p_paths <- ggplot(df_paths, aes(x = gdp_pc, y = co2_pc, color = country)) +
+  geom_path(linewidth = 1, alpha = 0.9,
+            arrow = arrow(type = "closed", length = unit(0.12, "in"))) +
+  geom_point(data = latest_points, size = 3) +
+
+  scale_x_log10(labels = label_number(big.mark = ",")) +
+  scale_y_log10(labels = label_number(big.mark = ",")) +
+  labs(
+    title    = "GDP per capita → CO2 per capita Pathways (1990–Present)",
+    subtitle = "Arrows indicate direction over time (1990 → latest available year)",
+    x = "GDP per capita (log scale)",
+    y = "CO2 emissions per capita (log scale)",
+    color = "Country"
+  ) +
+  theme_minimal(base_size = 14)
+
+p_paths
+
+```
+
+This figure shows how economic development relates to CO₂ emissions over time for selected countries (1990 → present).
+Each line represents a country’s trajectory: as GDP per capita increases (moving right), CO₂ emissions per capita may increase or decrease (moving up or down).
+The arrows indicate the direction of change over time.
+
+Country	& Interpretation
+China: Rapid economic growth accompanied by a strong increase in CO₂ emissions. Industrialization has been carbon-intensive.
+India: GDP per capita grows, but CO₂ emissions rise more slowly. India is developing with relatively lower per-capita emissions.
+Turkey: Moderate economic growth and a steady increase in emissions. Energy mix still depends heavily on fossil fuels.
+United States: High GDP per capita but declining CO₂ emissions. This suggests improved energy efficiency and cleaner energy sources.
+Germany: Stable high income with clear reduction in emissions, largely due to renewable energy and climate policies.
+
+Countries do not follow the same development–emissions pathway.
+Some countries (e.g., Germany, United States) reduce emissions while maintaining high income,
+while others (e.g., China, Turkey) still experience rising emissions as their economies grow.
+
+## Global CO₂ Emissions and Their Contribution to Global Temperature Change (1950–Present)
+
+```{r}
+temp_dat <- data %>%
+  filter(!is.na(temperature_change_from_co2), !is.na(co2), year >= 1950)
+
+temp_world <- temp_dat %>%
+  filter(country == "World", year >= 1950) %>%
+  select(year, global_co2 = co2, global_temp_effect = temperature_change_from_co2) %>%
+  filter(!is.na(global_co2), !is.na(global_temp_effect))
+
+p_temp <- ggplot(temp_world, aes(global_co2, global_temp_effect)) +
+  geom_line(color = "#C4463A", linewidth = 1.2) +
+  geom_point(size = 2) +
+  scale_x_continuous(labels = label_number(big.mark = ",")) +
+  labs(
+    title = "Global CO2 Emissions and Contribution to Temperature Change (1950–Present)",
+    subtitle = "World series from OWID; higher emissions align with greater warming contribution",
+    x = "Global CO2 emissions (million tonnes)",
+    y = "Temperature change attributed to CO2 (°C)"
+  ) +
+  theme_minimal(base_size = 13)
+
+p_temp
+```
+
+This chart shows how global carbon dioxide (CO₂) emissions have risen since 1950 and how this rise corresponds to an increasing contribution to global temperature change. As the line moves upward and to the right, it illustrates that higher annual global CO₂ emissions are consistently associated with greater warming influence on the Earth's climate. The relationship is not random—temperature impact steadily increases as emissions rise, reflecting the cumulative nature of CO₂ in the atmosphere. This visualization highlights the close connection between human-driven emissions and global warming, emphasizing that continued emission increases lead to progressively stronger climate effects.
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
