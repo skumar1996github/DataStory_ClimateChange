@@ -20,14 +20,13 @@ The slide deck which tells the data story with visuals in a *narrative structure
 
 ## Remove all this content ...
 
-... and put your content.
-
 ```{r}
 library(ggplot2)
 library(dplyr)
 library(readr)
 library(knitr)
 library(scales)
+library(readxl)
 ```
 
 ----------------------------------BETULS CODE STARTS HERE-----------------------
@@ -36,9 +35,7 @@ betuls content here...
 
 ----------------------------------BETULS CODE ENDS HERE--------------------------
 
-----------------------------------SAGARS CODE STARTS HERE-----------------------
-
-## Insight 2: Climate responsibility is unequal - historical emissions are concentrated in rich countries
+## Insight 3: Climate responsibility is unequal - historical emissions are concentrated in rich countries
 
 It has become clear that over the last few decades, humans are emitting more carbon dioxide into the earth’s atmosphere than ever before - and it is warming our planet. While the entire earth warms, not all nations share equal responsibility for this crisis. As we will see, historically, more developed or industrialized countries and continents like the United States and member states of the European Union, and as a whole Europe, have released more carbon dioxide into the atmosphere that has accumulated over the centuries. On the other hand, developing countries like India and many in Africa are only now beginning to emit more carbon as they lift themselves into the industrialized world. In addition, they argue that emissions by the developed countries are for “lifestyle” emissions and for the developing are “survival” emissions. This inequality raises the critical question of who should bear the responsibility of climate change?
 
@@ -48,26 +45,25 @@ In order to come up with any kind of answer, we need to break down the question.
 
 ```{r}
 # read data
-data <- read_csv("annual-co2-emissions-per-country.csv", show_col_types = FALSE)
+annual_emmisions_data <- read_csv("annual-co2-emissions-per-country.csv", show_col_types = FALSE)
 
-# known regional or group names to exclude
+# exclude known regions or groups
 regions <- c(
   "Asia", "Africa", "North America", "South America", "Oceania",
   "European Union (27)", "European Union (28)", "Middle East (GCP)",
   "High-income countries", "Low-income countries", "Upper-middle-income countries",
   "Lower-middle-income countries", "Non-OECD (GCP)", "OECD (GCP)", "Asia (GCP)",
-  "Europe (GCP)", "North America (GCP)", "Asia (excl. China and India)", "Europe (excl. EU-27)", "Europe (excl. EU-28)", "North America (excl. USA)", "South America (GCP)", "Africa (GCP)"
-)
+  "Europe (GCP)", "North America (GCP)", "Asia (excl. China and India)", "Europe (excl. EU-27)", "Europe (excl. EU-28)", "North America (excl. USA)", "South America (GCP)", "Africa (GCP)")
 
-# create top 10 list
-top10_2022 <- data |>
+# create and plot top 10 list
+top10_2023 <- annual_emmisions_data |>
   filter(Year == 2023) |>
   filter(!Entity %in% regions) |>
   select(Entity, `Annual CO₂ emissions`) |>
   arrange(desc(`Annual CO₂ emissions`)) |>
   slice_head(n = 11)
 
-ggplot(top10_2022,
+ggplot(top10_2023,
        aes(x = reorder(Entity, `Annual CO₂ emissions`),
            y = `Annual CO₂ emissions`,
            fill = Entity)) +
@@ -91,8 +87,8 @@ However, if we only look at the total global emissions today, we are not able to
 ```{r}
 countries <- c("United States", "China", "India", "Germany", "Europe", "Russia", "Japan")
 
-# --- Compute cumulative emissions by country over time ---
-co2_countries <- data |>
+# compute cumulative emissions by country over time
+co2_countries <- annual_emmisions_data |>
   filter(Entity %in% countries) |>
   select(Entity, Year, `Annual CO₂ emissions`) |>
   group_by(Entity) |>
@@ -100,7 +96,7 @@ co2_countries <- data |>
   mutate(Cumulative = cumsum(`Annual CO₂ emissions`)) |>
   ungroup()
 
-# --- Pick milestone years for clearer bars ---
+# pick milestone years for clearer bars
 milestones <- c(1800, 1900, 1950, 2000, 2025)
 co2_milestones <- co2_countries |>
   filter(Year %in% milestones)
@@ -110,7 +106,7 @@ ggplot(co2_milestones, aes(x = factor(Year), y = Cumulative, fill = Entity)) +
   geom_col() +
   labs(
     title = "Cumulative CO2 Emissions by Country (1750's–2023)",
-    x = "Year",
+    x = "Time Period",
     y = "Cumulative CO2 Emissions (tonnes)",
     fill = "Country"
   ) +
@@ -145,18 +141,57 @@ ggplot(shares,
     y = "Share of global cumulative CO2 emissions (%)"
   ) +
   scale_y_continuous(labels = scales::label_number(accuracy = 0.1)) +
-  theme_minimal(base_size = 13) +
-  theme(
-    plot.title = element_text(face = "bold"),
-    panel.grid.minor = element_blank(),
-    axis.title.y = element_blank()
-  )
+  theme_minimal(base_size = 13)
 ```
 
 ## Question 3: Which Countries Emitted The Most Carbon Dioxide Per Person?
 
 ```{r}
+# Combine carbons emissions and population data
+population_data <- read_excel("Country-Year-Population.xlsx")
 
+emissions_2023 <- annual_emmisions_data |>
+  filter(Year == 2023) |>
+  filter(!Entity %in% regions) |>
+  select(Code, Year, Annual_CO2_Emissions = `Annual CO₂ emissions`)
+
+data_2023 <- population_data |>
+  select(`Country Name`, `Country Code`, `2023 [YR2023]`) |>
+  rename(
+    Country_Name = `Country Name`,
+    Country_Code = `Country Code`,
+    Population_2023 = `2023 [YR2023]`
+  )
+
+combined_2023 <- emissions_2023 |>
+  left_join(data_2023, by = c("Code" = "Country_Code"), relationship = "many-to-many") |>
+  mutate(
+    Population_2023 = as.numeric(Population_2023),
+    CO2_per_capita = Annual_CO2_Emissions / Population_2023
+  )
 ```
 
-----------------------------------SAGARS CODE ENDS HERE--------------------------------------
+```{r}
+countries_of_interest <- c("United States", "India", "China", "Germany","France", "Japan", "Indonesia")
+
+selected_countries <- combined_2023 |>
+  filter(Country_Name %in% countries_of_interest)
+
+ggplot(selected_countries,
+       aes(x = reorder(Country_Name, CO2_per_capita),
+           y = CO2_per_capita,
+           fill = Country_Name)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(
+    title = "CO2 Emissions per Capita (2023)",
+    x = "Country",
+    y = "CO2 Emissions per Capita (tonnes per person)"
+  ) +
+  scale_y_continuous(labels = label_number(accuracy = 0.1)) +
+  theme_minimal()
+```
+
+When examining CO₂ emissions on a per capita basis, the disparities become between the countries becomes even clearer. Countries such as the United States, China, and Japan emit far more carbon dioxide per person than larger but less industrialized nations like India or Indonesia. This shows us that while developing countries may contribute more in total due to population size, their citizens individually emit far less. Per capita emissions highlight the lifestyle and consumption patterns that drive climate inequality. Developed economies maintain high energy use, extensive networks, and energy demanding industries that further rises their individual carbon footprints. Meanwhile, developing nations continue to emit primarily for basic growth and infrastructure needs.
+
+This brings to light the conversation about responsibility. It is not only about total emissions, but also about how much each person contributes. Addressing climate change fairly thus requires wealthier, high-emission nations to lead with stronger mitigation efforts, cleaner technologies, and financial support for developing countries’ transitions to sustainable growth.
