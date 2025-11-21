@@ -37,15 +37,11 @@ betuls content here...
 
 ## Insight 3: Climate responsibility is unequal - historical emissions are concentrated in rich countries
 
-It has become clear that over the last few decades, humans are emitting more carbon dioxide into the earth’s atmosphere than ever before - and it is warming our planet. While the entire earth warms, not all nations share equal responsibility for this crisis. As we will see, historically, more developed or industrialized countries and continents like the United States and member states of the European Union, and as a whole Europe, have released more carbon dioxide into the atmosphere that has accumulated over the centuries. On the other hand, developing countries like India and many in Africa are only now beginning to emit more carbon as they lift themselves into the industrialized world. In addition, they argue that emissions by the developed countries are for “lifestyle” emissions and for the developing are “survival” emissions. This inequality raises the critical question of who should bear the responsibility of climate change?
-
-In order to come up with any kind of answer, we need to break down the question. First, we first need to identify which countries emit the most carbon dioxide today, then look at which countries have emitted the most in total then finally identify the countries which emit the most per capita. This will allow us to understand both the present and historical dimensions of responsibility. By comparing total, annual, and per capita emissions, we can form a more balanced picture of climate accountability—distinguishing between nations driving ongoing pollution and those still developing their economies with far smaller carbon footprints.
-
 ## Question 1: Which Countries Emit The Most Carbon Today?
 
 ```{r}
 # read data
-annual_emmisions_data <- read_csv("annual-co2-emissions-per-country.csv", show_col_types = FALSE)
+annual_emmisions_data <- read_csv("datasets/annual-co2-emissions-per-country.csv", show_col_types = FALSE)
 
 # exclude known regions or groups
 regions <- c(
@@ -63,6 +59,7 @@ top10_2023 <- annual_emmisions_data |>
   arrange(desc(`Annual CO₂ emissions`)) |>
   slice_head(n = 11)
 
+# plot 
 ggplot(top10_2023,
        aes(x = reorder(Entity, `Annual CO₂ emissions`),
            y = `Annual CO₂ emissions`,
@@ -78,11 +75,7 @@ ggplot(top10_2023,
   theme_minimal()
 ```
 
-Looking at the top 10 countries that emit the most carbon dioxide in the year 2023, we see that China is by far and away the worlds largest emitter with almost 12 billion tonnes of carbon dioxide. Its followed by Europe at almost five billion and not far behind is the United States also at around five billion. Given that the total world combined carbon dioxide emissions in 2023 were 37 billion, and that the top three emitters in total emit 22 billion (almost 60%), it is clear that without the willingness and action of the these three industrial giants, that fixing climate will remain an impossible task. These three economies hold the greatest leverage in reducing global emissions, not only because of their industrial scale but also their technological and financial capacity to lead the transition toward cleaner energy. Their policies, innovations, and international cooperation will largely determine the success of of our collective global climate goals.
-
-However, if we only look at the total global emissions today, we are not able to grasp the entire picture. Therefore we need to look at historical emissions and how much countries have emitted over time.
-
-## Question 2: Which Countries Emitted The Most Carbon Dioxide In Total?
+## Question 2a: Which Countries Have Emitted The Most Carbon Dioxide In Total?
 
 ```{r}
 countries <- c("United States", "China", "India", "Germany", "Europe", "Russia", "Japan")
@@ -102,18 +95,20 @@ co2_milestones <- co2_countries |>
   filter(Year %in% milestones)
 
 # plot stacked bar chart
-ggplot(co2_milestones, aes(x = factor(Year), y = Cumulative, fill = Entity)) +
+ggplot(co2_milestones,
+       aes(x = factor(Year), y = Cumulative / 1e9, fill = Entity)) +
   geom_col() +
   labs(
     title = "Cumulative CO2 Emissions by Country (1750's–2023)",
     x = "Time Period",
-    y = "Cumulative CO2 Emissions (tonnes)",
+    y = "Cumulative CO2 Emissions (billion tonnes)",
     fill = "Country"
   ) +
+  scale_y_continuous(labels = label_number(accuracy = 1)) +
   theme_minimal(base_size = 12)
 ```
 
-If we look at historical emissions, there is a drastic change in the outlook. By far, the United States and Europe have emitted more carbon dioxide into the atmosphere during the 1950's and especially during the 21st century. Europe is responsible for 34% of the worlds historical emissions, while The United States is responsible for 27% with most of this coming from the 20th century. Third is China with 17%, which is exactly half of Europe's contribution. Then there is a drastic fall when it comes for countries like India, Russia, Japan and Germany with all under 8%. Therefore, the narrative that rapid climate change is really the responsibility of the developing world with its current day emission rates is not true.
+## Question 2b: Which Countries Have Emitted The Most Carbon Dioxide In Total?
 
 ```{r}
 # pick the latest available year
@@ -136,19 +131,19 @@ ggplot(shares,
   geom_col(show.legend = FALSE) +
   coord_flip() +
   labs(
-    title = paste("Top 7 Cumulative CO2 Emitters in", latest_year),
+    title = paste("Top 7 Cumulative Carbon Dioxide Emitters"),
     x = "Country",
-    y = "Share of global cumulative CO2 emissions (%)"
+    y = "Share of global cumulative Carbon Dioxide emissions (%)"
   ) +
   scale_y_continuous(labels = scales::label_number(accuracy = 0.1)) +
   theme_minimal(base_size = 13)
 ```
 
-## Question 3: Which Countries Emitted The Most Carbon Dioxide Per Person?
+## Question 3: Which Countries Emit The Most Carbon Dioxide Per Person?
 
 ```{r}
-# Combine carbons emissions and population data
-population_data <- read_excel("Country-Year-Population.xlsx")
+# combine carbons emissions and population data
+population_data <- read_excel("datasets/Country-Year-Population.xlsx")
 
 emissions_2023 <- annual_emmisions_data |>
   filter(Year == 2023) |>
@@ -191,7 +186,3 @@ ggplot(selected_countries,
   scale_y_continuous(labels = label_number(accuracy = 0.1)) +
   theme_minimal()
 ```
-
-When examining CO₂ emissions on a per capita basis, the disparities become between the countries becomes even clearer. Countries such as the United States, China, and Japan emit far more carbon dioxide per person than larger but less industrialized nations like India or Indonesia. This shows us that while developing countries may contribute more in total due to population size, their citizens individually emit far less. Per capita emissions highlight the lifestyle and consumption patterns that drive climate inequality. Developed economies maintain high energy use, extensive networks, and energy demanding industries that further rises their individual carbon footprints. Meanwhile, developing nations continue to emit primarily for basic growth and infrastructure needs.
-
-This brings to light the conversation about responsibility. It is not only about total emissions, but also about how much each person contributes. Addressing climate change fairly thus requires wealthier, high-emission nations to lead with stronger mitigation efforts, cleaner technologies, and financial support for developing countries’ transitions to sustainable growth.
