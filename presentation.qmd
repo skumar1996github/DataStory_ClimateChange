@@ -27,6 +27,7 @@ library(readr)
 library(knitr)
 library(scales)
 library(readxl)
+library(ggthemes)
 ```
 
 ----------------------------------BETULS CODE STARTS HERE-----------------------
@@ -49,17 +50,18 @@ regions <- c(
   "European Union (27)", "European Union (28)", "Middle East (GCP)",
   "High-income countries", "Low-income countries", "Upper-middle-income countries",
   "Lower-middle-income countries", "Non-OECD (GCP)", "OECD (GCP)", "Asia (GCP)",
-  "Europe (GCP)", "North America (GCP)", "Asia (excl. China and India)", "Europe (excl. EU-27)", "Europe (excl. EU-28)", "North America (excl. USA)", "South America (GCP)", "Africa (GCP)")
+  "Europe (GCP)", "North America (GCP)", "Asia (excl. China and India)", "Europe (excl. EU-27)", "Europe (excl. EU-28)", "North America (excl. USA)", "South America (GCP)", "Africa (GCP)", "International shipping")
 
 # create and plot top 10 list
 top10_2023 <- annual_emmisions_data |>
   filter(Year == 2023) |>
   filter(!Entity %in% regions) |>
+  filter(Entity != "World" & Entity != "Russia" & Entity != "Germany") |>
   select(Entity, `Annual CO₂ emissions`) |>
   arrange(desc(`Annual CO₂ emissions`)) |>
-  slice_head(n = 11)
+  slice_head(n = 10)
 
-# plot 
+# plot
 ggplot(top10_2023,
        aes(x = reorder(Entity, `Annual CO₂ emissions`),
            y = `Annual CO₂ emissions`,
@@ -72,13 +74,14 @@ ggplot(top10_2023,
     y = "Annual CO2 Emissions (tonnes)",
   ) +
   scale_y_continuous(labels = label_number(scale_cut = cut_short_scale())) +
+  scale_fill_tableau() +
   theme_minimal()
 ```
 
 ## Question 2a: Which Countries Have Emitted The Most Carbon Dioxide In Total?
 
 ```{r}
-countries <- c("United States", "China", "India", "Germany", "Europe", "Russia", "Japan")
+countries <- c("United States", "China", "India", "Europe", "Japan")
 
 # compute cumulative emissions by country over time
 co2_countries <- annual_emmisions_data |>
@@ -99,12 +102,13 @@ ggplot(co2_milestones,
        aes(x = factor(Year), y = Cumulative / 1e9, fill = Entity)) +
   geom_col() +
   labs(
-    title = "Cumulative CO2 Emissions by Country (1750's–2023)",
+    title = "Cumulative CO2 Emissions by Country (1800's–2000's)",
     x = "Time Period",
     y = "Cumulative CO2 Emissions (billion tonnes)",
     fill = "Country"
   ) +
   scale_y_continuous(labels = label_number(accuracy = 1)) +
+  scale_fill_tableau() +
   theme_minimal(base_size = 12)
 ```
 
@@ -136,6 +140,7 @@ ggplot(shares,
     y = "Share of global cumulative Carbon Dioxide emissions (%)"
   ) +
   scale_y_continuous(labels = scales::label_number(accuracy = 0.1)) +
+  scale_fill_tableau() +
   theme_minimal(base_size = 13)
 ```
 
@@ -184,5 +189,6 @@ ggplot(selected_countries,
     y = "CO2 Emissions per Capita (tonnes per person)"
   ) +
   scale_y_continuous(labels = label_number(accuracy = 0.1)) +
+  scale_fill_tableau() +
   theme_minimal()
 ```
