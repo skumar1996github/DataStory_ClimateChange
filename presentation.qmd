@@ -32,9 +32,11 @@ library(ggthemes)
 
 ## Dataset Sources
 
-https://ourworldindata.org/co2-emissions : owid-co2-data.csv
+https://ourworldindata.org/co2-emissions : owid-co2-data.xlsx & annual-co2-emissions-per-country.csv
+
 https://github.com/owid/owid-datasets/ : Global average temperature anomaly - Hadley Centre.csv
-https://data.worldbank.org/ : Country-Year-Population.csv
+
+https://data.worldbank.org/ : Country-Year-Population.xlsx
 
 ## Insight 1: Global Temperature is Rising
 
@@ -236,8 +238,7 @@ p_paths
 
 This figure shows how economic development relates to CO₂ emissions over time for selected countries (1990 → present). Each line represents a country’s trajectory: as GDP per capita increases (moving right), CO₂ emissions per capita may increase or decrease (moving up or down). The arrows indicate the direction of change over time.
 
-Country & Interpretation 
-China & India: Rapid economic growth accompanied by rising emissions, reflecting carbon-intensive industrialization.
+Country & Interpretation China & India: Rapid economic growth accompanied by rising emissions, reflecting carbon-intensive industrialization.
 
 Turkey & Brazil: Moderate income growth with increasing emissions, indicating continued dependence on fossil fuels.
 
