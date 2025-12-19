@@ -30,6 +30,12 @@ library(readxl)
 library(ggthemes)
 ```
 
+## Dataset Sources
+
+https://ourworldindata.org/co2-emissions : owid-co2-data.csv
+https://github.com/owid/owid-datasets/ : Global average temperature anomaly - Hadley Centre.csv
+https://data.worldbank.org/ : Country-Year-Population.csv
+
 ## Insight 1: Global Temperature is Rising
 
 ## Climate Stripes
