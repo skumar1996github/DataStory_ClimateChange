@@ -1,24 +1,23 @@
 ---
-title: "Data Story Title"
+title: "Climate Change"
 format: 
   revealjs:
     slide-number: true
 ---
 
-## Slide deck for your presentation
+Constructor University, Data Science for Business and Society
 
-Change this file to become your presentation slide deck.
+Name: Sagar Kumar and Betül Yurtman
 
-The slide deck which tells the data story with visuals in a *narrative structure*[^1].
+Matriculation No.: 30000402 and 30008426
 
-[^1]: See *Effective Data Storytelling*, Brent Dykes (2020), Figure 4.3.
+Course: MDSSBO-203-Visual Communication and Data Storytelling
 
-## This deck is made with quarto revealjs
+Semester: Fall 2025
 
--   You find documentation of how to make revealjs presentations with quarto here: <https://quarto.org/docs/presentations/revealjs/>
--   Skip through the demo presentation and learn from there.
+Instructor: Prof. Jan Lorenz
 
-## Remove all this content ...
+## Climate Change
 
 ```{r}
 library(ggplot2)
